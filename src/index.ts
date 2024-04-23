@@ -19,6 +19,7 @@ const api = new ApiPromise({
 
 var wait_replica = false;
 var wait_prepaid = true;
+var readd_prepaid = false;
 var _increment_arg_position = 0;
 
 if (process.argv.length > 2 && process.argv[2].endsWith('index.js')) {
@@ -92,7 +93,7 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
     const ipfsMetaDataFilePath = filePath + '.meta.ipfs.json';
 
     // 3. Add IPFS
-    var rst:any = {};
+    var rst: any = {};
     if (fs.existsSync(ipfsMetaDataFilePath)) {
         rst = JSON.parse(fs.readFileSync(ipfsMetaDataFilePath).toString());
     } else {
@@ -114,7 +115,18 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
 
 
     // II. Place storage order
-    await placeStorageOrder(rst.cid, rst.size);
+
+    const crustMetaDataFilePath = filePath + '.meta.crust.json';
+    var orderStatus = undefined;
+    if (fs.existsSync(crustMetaDataFilePath)) {
+        orderStatus = JSON.parse(fs.readFileSync(crustMetaDataFilePath).toString());
+        var _newOrderStatus: any = (await getOrderState(rst.cid)).toJSON();
+        fs.writeFileSync(crustMetaDataFilePath, JSON.stringify(_newOrderStatus));
+    }
+
+    if (orderStatus == undefined) {
+        await placeStorageOrder(rst.cid, rst.size);
+    }
 
     if (onPinned) {
         onPinned(rst)
@@ -123,7 +135,9 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
     // III. [OPTIONAL] Add prepaid
     // Learn what's prepard for: https://wiki.crust.network/docs/en/DSM#3-file-order-assurance-settlement-and-discount
     const addedAmount = 100000000000; // in pCRU, 1 pCRU = 10^-12 CRU / 1 mCRU = 10^-6 CRU (100 mCRU is equivalent in pCRU to 100 * 10^6)
-    await addPrepaid(rst.cid, addedAmount);
+    if (orderStatus == undefined || readd_prepaid) {
+        await addPrepaid(rst.cid, addedAmount);
+    }
 
     // IV. Query storage status
     // Query forever here ...
@@ -156,7 +170,6 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
             if (onCompleted) {
                 onCompleted(rst, orderStatus);
             } else {
-                const crustMetaDataFilePath = filePath + '.meta.crust.json';
                 fs.writeFileSync(crustMetaDataFilePath, JSON.stringify(orderStatus));
             }
         }
