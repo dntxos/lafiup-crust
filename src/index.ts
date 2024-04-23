@@ -36,14 +36,21 @@ main(filePath);
 async function main(filePath: string) {
     // create output directory in same directory as input file, adding .meta.output as extension of new directory
     const outputDirectory = filePath + '.meta.output';
+    const outputSplitted = filePath + '.meta.splitted.json';
 
     // create output directory if it does not exist
     if (!fs.existsSync(outputDirectory)) {
         fs.mkdirSync(outputDirectory);
     }
 
-    // split the file into 100MB parts
-    var splitted=await splitFileBySize(filePath, 500000000, outputDirectory);
+
+    var splitted = [];
+    if (fs.existsSync(outputSplitted)) {
+        splitted = JSON.parse(fs.readFileSync(outputSplitted).toString());
+    } else {
+        splitted = await splitFileBySize(filePath, 500000000, outputDirectory);
+        fs.writeFileSync(outputSplitted, JSON.stringify(splitted));
+    }
 
     // upload each part to IPFS and pin it
     for (var i = 0; i < splitted.length; i++) {
@@ -53,7 +60,7 @@ async function main(filePath: string) {
 
     console.log('All files uploaded to IPFS and pinned');
     process.exit(0);
-    
+
 }
 
 async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPinned: any = null, onPrepaid: any = null, onReplica: any = null, onCompleted: any = null) {
@@ -82,14 +89,21 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
         }
     });
 
+    const ipfsMetaDataFilePath = filePath + '.meta.ipfs.json';
+
     // 3. Add IPFS
-    const rst = await addFile(ipfsRemote, fileContent); // Or use IPFS local
+    var rst:any = {};
+    if (fs.existsSync(ipfsMetaDataFilePath)) {
+        rst = JSON.parse(fs.readFileSync(ipfsMetaDataFilePath).toString());
+    } else {
+        rst = await addFile(ipfsRemote, fileContent); // Or use IPFS local
+    }
+
     console.log(rst);
 
     if (onUploaded) {
         onUploaded(rst)
     } else {
-        const ipfsMetaDataFilePath = filePath + '.meta.ipfs.json';
         fs.writeFileSync(ipfsMetaDataFilePath, JSON.stringify(rst));
     }
 
@@ -108,7 +122,7 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
 
     // III. [OPTIONAL] Add prepaid
     // Learn what's prepard for: https://wiki.crust.network/docs/en/DSM#3-file-order-assurance-settlement-and-discount
-    const addedAmount = 100; // in pCRU, 1 pCRU = 10^-12 CRU
+    const addedAmount = 100000000000; // in pCRU, 1 pCRU = 10^-12 CRU / 1 mCRU = 10^-6 CRU (100 mCRU is equivalent in pCRU to 100 * 10^6)
     await addPrepaid(rst.cid, addedAmount);
 
     // IV. Query storage status
