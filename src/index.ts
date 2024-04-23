@@ -132,16 +132,20 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
         onPinned(rst)
     }
 
+    var canExit = false;
+
     // III. [OPTIONAL] Add prepaid
     // Learn what's prepard for: https://wiki.crust.network/docs/en/DSM#3-file-order-assurance-settlement-and-discount
     const addedAmount = 100000000000; // in pCRU, 1 pCRU = 10^-12 CRU / 1 mCRU = 10^-6 CRU (100 mCRU is equivalent in pCRU to 100 * 10^6)
     if (orderStatus == undefined || readd_prepaid) {
         await addPrepaid(rst.cid, addedAmount);
+    } else {
+        canExit = true;
     }
 
     // IV. Query storage status
     // Query forever here ...
-    var canExit = false;
+    
     while (true && !canExit) {
         const orderStatus: any = (await getOrderState(rst.cid)).toJSON();
         console.log('Replica count: ', orderStatus['reported_replica_count']); // Print the replica count
