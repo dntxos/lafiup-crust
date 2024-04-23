@@ -10,7 +10,7 @@ import { splitFile, splitFileBySize } from 'split-file';
 import { env } from 'process';
 
 const crustChainEndpoint = 'wss://rpc.crust.network'; // More endpoints: https://github.com/crustio/crust-apps/blob/master/packages/apps-config/src/endpoints/production.ts#L9
-const ipfsW3GW = 'https://crustipfs.xyz'; // More web3 authed gateways: https://github.com/crustio/ipfsscan/blob/main/lib/constans.ts#L29
+const ipfsW3GW = 'https://gw.smallwolf.me'; // More web3 authed gateways: https://github.com/crustio/ipfsscan/blob/main/lib/constans.ts#L29
 var crustSeeds = 'xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx'; // Create account(seeds): https://wiki.crust.network/docs/en/crustAccount
 const api = new ApiPromise({
     provider: new WsProvider(crustChainEndpoint),
