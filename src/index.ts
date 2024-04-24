@@ -105,7 +105,7 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
     if (onUploaded) {
         onUploaded(rst)
     } else {
-        fs.writeFileSync(ipfsMetaDataFilePath, JSON.stringify(rst));
+        fs.writeFileSync(ipfsMetaDataFilePath, JSON.stringify(rst,null,2));
     }
 
     // check if api is ready and wait for it
@@ -121,7 +121,7 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
     if (fs.existsSync(crustMetaDataFilePath)) {
         orderStatus = JSON.parse(fs.readFileSync(crustMetaDataFilePath).toString());
         var _newOrderStatus: any = (await getOrderState(rst.cid)).toJSON();
-        fs.writeFileSync(crustMetaDataFilePath, JSON.stringify(_newOrderStatus));
+        fs.writeFileSync(crustMetaDataFilePath, JSON.stringify(_newOrderStatus,null,2));
     }
 
     if (orderStatus == undefined) {
@@ -174,7 +174,7 @@ async function uploadToIpfsAndPin(filePath: string, onUploaded: any = null, onPi
             if (onCompleted) {
                 onCompleted(rst, orderStatus);
             } else {
-                fs.writeFileSync(crustMetaDataFilePath, JSON.stringify(orderStatus));
+                fs.writeFileSync(crustMetaDataFilePath, JSON.stringify(orderStatus,null,2));
             }
         }
     }
